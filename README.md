@@ -14,8 +14,12 @@ git push -u origin main
 
 # Writen by Guiwoo
 
--1. fmt.Sprintf("%b,%x","etetete") => formating the string
--2. One funcing wokrs one thing, Receiver Funcion
-*Receve Func ? ex) Do not want to copy
-type blockchain struct {blocks []block}
-func (b *blockchain) getLastHash() string {return""}
+----------------------------------------------------------|
+1.| fmt.Sprintf("%b,%x","etetete") => formating the string|
+----------------------------------------------------------|
+2.| One funcing wokrs one thing, Receiver Funcion |
+*Receve Func ? ex) Do not want to copy |
+type blockchain struct {blocks []block} |
+func (b *blockchain) getLastHash() string {return""} |
+-----------------------------------------------------------|
+3.|
