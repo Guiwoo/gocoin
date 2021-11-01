@@ -29,3 +29,7 @@ git push -u origin main
 
 |4. Pacaga Sync |
 |병렬적으로 실행가능한 go, 동기적 처리해야하는부분,한번만실행 |
+
+|5. Adaptor pattern|
+| •어댑터 패턴(Adapter pattern)은 클래스의 인터페이스를 사용자가 기대하는 다른 인터페이스로 변환하는 패턴으로, 호환성이 없는 인터페이스 때문에 함께 동작할 수 없는 클래스들이 함께 작동하도록 해준다.|
+|https://yaboong.github.io/design-pattern/2018/10/15/adapter-pattern/|
