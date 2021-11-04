@@ -18,8 +18,9 @@ func usage() {
 }
 
 func Start() {
-	port := flag.Int("✅ port", 4000, "Set port of the server")
-	mode := flag.String("mode", "rest", "✅Choose between 'html' and `rest")
+	port := flag.Int("port", 4000, "✅Set port of the server")
+	extraPort := flag.Int("extraPort", *port+1, "⭐️Running boss of them")
+	mode := flag.String("mode", "run", "✅Choose between 'html' and `rest` or `run` for both")
 
 	flag.Parse()
 
@@ -28,6 +29,9 @@ func Start() {
 		rest.Start(*port)
 	case "html":
 		explorer.Start(*port)
+	case "run":
+		go rest.Start(*port)
+		explorer.Start(*extraPort)
 	default:
 		usage()
 	}
