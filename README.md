@@ -43,3 +43,6 @@ git push -u origin main
 | 6. Cli         |
 | -------------- |
 | Check On Cobra |
+
+|7.BoltDb--|
+|#Why ? BoltDb needs only key and value simple db|
