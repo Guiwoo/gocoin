@@ -3,7 +3,7 @@ package cli
 import (
 	"flag"
 	"fmt"
-	"os"
+	"runtime"
 
 	"github.com/guiwoo/gocoin/explorer"
 	"github.com/guiwoo/gocoin/rest"
@@ -14,7 +14,7 @@ func usage() {
 	fmt.Printf("Please use the following flags:\n\n")
 	fmt.Printf("-port=4000:		Set the port of the server\n")
 	fmt.Printf("-mode=rest:		✅Choose between 'html' and `rest\n")
-	os.Exit(0)
+	runtime.Goexit()
 }
 
 func Start() {

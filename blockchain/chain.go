@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/guiwoo/gocoin/db"
@@ -15,6 +16,10 @@ type blockchain struct {
 var b *blockchain
 var once sync.Once
 
+func (b *blockchain) restore(data []byte) {
+	utils.FromBytes(b, data)
+}
+
 func (b *blockchain) persist() {
 	db.SaveBlockChain(utils.ToBytes(b))
 }
@@ -26,12 +31,33 @@ func (b *blockchain) AddBlock(data string) {
 	b.persist()
 }
 
+func (b *blockchain) Blocks() []*Block {
+	var blocks []*Block
+	hashCursor := b.NewestHash
+	for {
+		block, _ := FindBlock(hashCursor)
+		blocks = append(blocks, block)
+		if block.PrevHash != "" {
+			hashCursor = block.PrevHash
+		} else {
+			break
+		}
+	}
+	return blocks
+}
+
 func BlockChain() *blockchain {
 	if b == nil {
 		once.Do(func() {
-			b = &blockchain{}
-			b.AddBlock("Genesis")
+			b = &blockchain{"", 0}
+			checkPoint := db.CheckPoint()
+			if checkPoint == nil {
+				b.AddBlock("Genesis")
+			} else {
+				b.restore(checkPoint)
+			}
 		})
 	}
+	fmt.Println(b.NewestHash)
 	return b
 }

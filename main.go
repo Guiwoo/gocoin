@@ -1,7 +1,11 @@
 package main
 
-import "github.com/guiwoo/gocoin/blockchain"
+import (
+	"github.com/guiwoo/gocoin/cli"
+	"github.com/guiwoo/gocoin/db"
+)
 
 func main() {
-	blockchain.BlockChain()
+	defer db.Close()
+	cli.Start()
 }
