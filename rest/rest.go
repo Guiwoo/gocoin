@@ -41,6 +41,11 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 			Method:      "GET",
 			Description: "See Documentation",
 		}, {
+			URL:         uRL("/status"),
+			Method:      "GET",
+			Description: "See the Status of the BlockChain",
+		},
+		{
 			URL:         uRL("/blocks"),
 			Method:      "Post",
 			Description: "Add A Block",
@@ -67,6 +72,10 @@ func blocks(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func status(rw http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(rw).Encode(blockchain.BlockChain())
+}
+
 func block(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
@@ -91,6 +100,7 @@ func Start(aPort int) {
 	router := mux.NewRouter()
 	router.Use(jsonContentTypeMiddlewar)
 	router.HandleFunc("/", documentation).Methods("GET")
+	router.HandleFunc("/status", status).Methods("GET")
 	router.HandleFunc("/blocks", blocks).Methods("GET", "POST")
 	router.HandleFunc("/blocks/{hash:[a-f0-9]+}", block).Methods("GET")
 	fmt.Printf("✅Listening on http://localhost%s\n", port)

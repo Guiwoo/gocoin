@@ -44,5 +44,11 @@ git push -u origin main
 | -------------- |
 | Check On Cobra |
 
-|7.BoltDb--|
-|#Why ? BoltDb needs only key and value simple db|
+| 7.BoltDb--                                       |
+| ------------------------------------------------ |
+| #Why ? BoltDb needs only key and value simple db |
+
+| 8. Pow--                                                        |
+| --------------------------------------------------------------- |
+| anybody can validate block but hard to solve by computing power |
+| no pattern, one way function , hard for computer                |
