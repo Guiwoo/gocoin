@@ -17,7 +17,7 @@ type Block struct {
 	Difficulty   int    `json:"defficulty"`
 	Nonce        int    `json:"nonce"`
 	TimeStamp    int    `json:"timestamp"`
-	Transactions []*Tx  ``
+	Transactions []*Tx  `json:"transactions"`
 }
 
 func (b *Block) persist() {

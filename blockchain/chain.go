@@ -79,6 +79,36 @@ func (b *blockchain) difficulty() int {
 		return b.CurrentDifficulty
 	}
 }
+func (b *blockchain) txOuts() []*TxOut {
+	var txOuts []*TxOut
+	blocks := b.Blocks()
+	for _, block := range blocks {
+		for _, tx := range block.Transactions {
+			txOuts = append(txOuts, tx.TxOuts...)
+		}
+	}
+	return txOuts
+}
+
+func (b *blockchain) TxOutByaddress(address string) []*TxOut {
+	var ownedTxOuts []*TxOut
+	txOuts := b.txOuts()
+	for _, txOut := range txOuts {
+		if txOut.Owner == address {
+			ownedTxOuts = append(ownedTxOuts, txOut)
+		}
+	}
+	return ownedTxOuts
+}
+
+func (b *blockchain) BalanceByAddress(address string) int {
+	txOuts := b.TxOutByaddress(address)
+	var amout int
+	for _, txOut := range txOuts {
+		amout += txOut.Amount
+	}
+	return amout
+}
 
 func BlockChain() *blockchain {
 	if b == nil {
