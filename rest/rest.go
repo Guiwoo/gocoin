@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/guiwoo/gocoin/blockchain"
-	"github.com/guiwoo/gocoin/utils"
 )
 
 var port string
@@ -28,10 +27,6 @@ type uRLDescription struct {
 	Method      string `json:"method"`
 	Description string `json:"description"`
 	Payload     string `json:"payload,omitempty"`
-}
-
-type blockBody struct {
-	Message string
 }
 
 func documentation(rw http.ResponseWriter, r *http.Request) {
@@ -65,9 +60,7 @@ func blocks(rw http.ResponseWriter, r *http.Request) {
 	case "GET":
 		json.NewEncoder(rw).Encode(blockchain.BlockChain().Blocks())
 	case "POST":
-		var blockBody blockBody
-		utils.HandleErr(json.NewDecoder(r.Body).Decode(&blockBody))
-		blockchain.BlockChain().AddBlock(blockBody.Message)
+		blockchain.BlockChain().AddBlock()
 		rw.WriteHeader(http.StatusCreated)
 	}
 }
