@@ -58,3 +58,6 @@ git push -u origin main
 | Tx1 => TxIn[COINBASE], TxOut[$5(you)]--              |
 | Tx2 => TxIn[Has to be connected output]--            |
 | ex) TxIns[Tx1,TxOuts[0]] TxOuts[$5(me)] <- uTxOut>-- |
+
+| 10. Wallet-- |
+| ------------ |
