@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/guiwoo/gocoin/blockchain"
@@ -59,7 +58,7 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 			Payload:     "data:string",
 		},
 		{
-			URL:         uRLaddress("/blocks/{height}"),
+			URL:         uRLaddress("/blocks/{hash}"),
 			Method:      "Post",
 			Description: "See a block",
 		},
@@ -70,20 +69,19 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 func blocks(rw http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		json.NewEncoder(rw).Encode(blockchain.GetBlockChain().AllBlocks())
+		json.NewEncoder(rw).Encode(blockchain.BlockChain().Blocks())
 	case "POST":
 		var addBlockMessage addBlockMessage
 		utils.HandleErr(json.NewDecoder(r.Body).Decode(&addBlockMessage))
-		blockchain.GetBlockChain().AddBlock(addBlockMessage.Message)
+		blockchain.BlockChain().AddBlock(addBlockMessage.Message)
 		rw.WriteHeader(http.StatusCreated)
 	}
 }
 
 func block(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["height"])
-	utils.HandleErr(err)
-	block, err := blockchain.GetBlockChain().GetBlock(id)
+	hash := vars["hash"]
+	block, err := blockchain.FindBlock(hash)
 	encoder := json.NewEncoder(rw)
 	if err != nil {
 		encoder.Encode(errResponse{fmt.Sprint(err)})
@@ -107,7 +105,7 @@ func Start(aPort int) {
 	rotuer.Use(jsonContentTypeMiddleware)
 	rotuer.HandleFunc("/", documentation).Methods("GET")
 	rotuer.HandleFunc("/blocks", blocks).Methods("GET", "POST")
-	rotuer.HandleFunc("/blocks/{height:[0-9]+}", block).Methods("GET")
+	rotuer.HandleFunc("/blocks/{hash:[a-f0-9]+}", block).Methods("GET")
 	fmt.Printf("✅ http://localhost%s Connected\n", port)
 	log.Fatal(http.ListenAndServe(port, rotuer))
 }
