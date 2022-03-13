@@ -45,6 +45,10 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 			URL:         uRLaddress("/"),
 			Method:      "GET",
 			Description: "See Documentation",
+		}, {
+			URL:         uRLaddress("/status"),
+			Method:      "GET",
+			Description: "See the status of the block",
 		},
 		{
 			URL:         uRLaddress("/blocks"),
@@ -99,11 +103,16 @@ func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func status(rw http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(rw).Encode(blockchain.BlockChain())
+}
+
 func Start(aPort int) {
 	rotuer := mux.NewRouter()
 	port = fmt.Sprintf(":%d", aPort)
 	rotuer.Use(jsonContentTypeMiddleware)
 	rotuer.HandleFunc("/", documentation).Methods("GET")
+	rotuer.HandleFunc("/status", status)
 	rotuer.HandleFunc("/blocks", blocks).Methods("GET", "POST")
 	rotuer.HandleFunc("/blocks/{hash:[a-f0-9]+}", block).Methods("GET")
 	fmt.Printf("✅ http://localhost%s Connected\n", port)
