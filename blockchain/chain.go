@@ -14,6 +14,12 @@ type blockchain struct {
 	CurrentDifficulty int    `json:"currentdifficulty"`
 }
 
+type mempool struct {
+	Txs []*Tx
+}
+
+var Mempool *mempool = &mempool{}
+
 const (
 	defaultDifficulty  int = 2
 	difficultyInterval int = 5
@@ -57,8 +63,8 @@ func (b *blockchain) persist() {
 	db.SaveBlockchain(utils.ToBytes(b))
 }
 
-func (b *blockchain) AddBlock(data string) {
-	block := CreateBlock(data, b.NewestHash, b.Height+1)
+func (b *blockchain) AddBlock() {
+	block := CreateBlock(b.NewestHash, b.Height+1)
 	b.NewestHash = block.Hash
 	b.Height = block.Height
 	b.CurrentDifficulty = block.Difficulty
@@ -80,6 +86,37 @@ func (b *blockchain) Blocks() []*Block {
 	return blocks
 }
 
+func (b *blockchain) txOut() []*TxOut {
+	var txOuts []*TxOut
+	blocks := b.Blocks()
+	for _, block := range blocks {
+		for _, tx := range block.Transactions {
+			txOuts = append(txOuts, tx.TxOuts...)
+		}
+	}
+	return txOuts
+}
+
+func (b *blockchain) TxOutsByAddress(address string) []*TxOut {
+	var ownTxOuts []*TxOut
+	txOuts := b.txOut()
+	for _, txOut := range txOuts {
+		if txOut.Owner == address {
+			ownTxOuts = append(ownTxOuts, txOut)
+		}
+	}
+	return ownTxOuts
+}
+
+func (b *blockchain) BalanceByAddress(address string) int {
+	txOuts := b.TxOutsByAddress(address)
+	var amount int
+	for _, v := range txOuts {
+		amount += v.Amount
+	}
+	return amount
+}
+
 func BlockChain() *blockchain {
 	if b == nil {
 		once.Do(func() {
@@ -88,7 +125,7 @@ func BlockChain() *blockchain {
 			}
 			checkPoint := db.CheckPoint()
 			if checkPoint == nil {
-				b.AddBlock("Genesis")
+				b.AddBlock()
 			} else {
 				b.restore(checkPoint)
 			}
