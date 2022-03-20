@@ -55,12 +55,12 @@ func (b *Block) mine() {
 	}
 }
 
-func CreateBlock(prevHash string, height int) *Block {
+func CreateBlock(prevHash string, height int, diff int) *Block {
 	block := &Block{
 		Hash:       "",
 		PrevHash:   prevHash,
 		Height:     height,
-		Difficulty: BlockChain().difficulty(),
+		Difficulty: diff,
 		Nonce:      0,
 	}
 
