@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/guiwoo/gocoin/cli"
-	"github.com/guiwoo/gocoin/db"
+	"github.com/guiwoo/gocoin/wallet"
 )
 
 func main() {
-	defer db.Close()
-	cli.Start()
+	// defer db.Close()
+	// cli.Start()
+	wallet.Wallet()
 }
