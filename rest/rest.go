@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/guiwoo/gocoin/blockchain"
+	"github.com/guiwoo/gocoin/p2p"
 	"github.com/guiwoo/gocoin/utils"
 	"github.com/guiwoo/gocoin/wallet"
 )
@@ -72,10 +73,16 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 			URL:         uRLaddress("/blocks/{hash}"),
 			Method:      "Post",
 			Description: "See a block",
-		}, {
+		},
+		{
 			URL:         uRLaddress("/balance/{address}"),
 			Method:      "GET",
 			Description: "GET Txouts for an Address",
+		},
+		{
+			URL:         uRLaddress("/ws}"),
+			Method:      "GET",
+			Description: "Upgrade to Web Sockets",
 		},
 	}
 	json.NewEncoder(rw).Encode(data)
@@ -108,6 +115,13 @@ func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 		//Do something
 		rw.Header().Add("Content-Type", "application/json")
 		log.Println(r.RequestURI)
+		next.ServeHTTP(rw, r)
+	})
+}
+
+func loggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL)
 		next.ServeHTTP(rw, r)
 	})
 }
@@ -152,7 +166,7 @@ func myWallet(rw http.ResponseWriter, r *http.Request) {
 func Start(aPort int) {
 	router := mux.NewRouter()
 	port = fmt.Sprintf(":%d", aPort)
-	router.Use(jsonContentTypeMiddleware)
+	router.Use(jsonContentTypeMiddleware, loggerMiddleware)
 	router.HandleFunc("/", documentation).Methods("GET")
 	router.HandleFunc("/status", status).Methods("GET")
 	router.HandleFunc("/blocks", blocks).Methods("GET", "POST")
@@ -161,6 +175,7 @@ func Start(aPort int) {
 	router.HandleFunc("/mempool", mempool).Methods("GET")
 	router.HandleFunc("/wallet", myWallet).Methods("GET")
 	router.HandleFunc("/transactions", transactions).Methods("POST")
+	router.HandleFunc("/ws", p2p.Upgrade).Methods("GET")
 	fmt.Printf("✅ http://localhost%s Connected\n", port)
 	log.Fatal(http.ListenAndServe(port, router))
 }
