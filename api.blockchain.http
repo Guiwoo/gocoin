@@ -20,12 +20,10 @@ http://localhost:4000/balance/554f3d7c40a82e8acadc5637c8bfd429ffc199d2abb8bf7df1
 
 ### Sending money
 POST http://localhost:4000/transactions
-
 {
     "to":"lynn",
     "amount":50
 }
-
 ### mempool
 http://localhost:4000/mempool
 

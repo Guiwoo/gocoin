@@ -57,3 +57,8 @@
     - loggerMiddleware added for checking the hitting url
 
 - EverySingleNode will run go routine
+- AddPeer will call in current localhost
+- Upgrade will connect to localhost3000 and upgrade ws
+
+- How to track who's open the ws >?
+  - send the openPort by query awesomne
