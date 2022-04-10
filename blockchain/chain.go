@@ -14,12 +14,6 @@ type blockchain struct {
 	CurrentDifficulty int    `json:"currentdifficulty"`
 }
 
-type mempool struct {
-	Txs []*Tx
-}
-
-var Mempool *mempool = &mempool{}
-
 const (
 	defaultDifficulty  int = 2
 	difficultyInterval int = 5
@@ -71,6 +65,23 @@ func (b *blockchain) AddBlock() {
 	persistBlockchain(b)
 }
 
+func Txs(b *blockchain) []*Tx {
+	var txs []*Tx
+	for _, block := range Blocks(b) {
+		txs = append(txs, block.Transactions...)
+	}
+	return txs
+}
+
+func FindTx(b *blockchain, target string) *Tx {
+	for _, tx := range Txs(b) {
+		if tx.ID == target {
+			return tx
+		}
+	}
+	return nil
+}
+
 func Blocks(b *blockchain) []*Block {
 	var blocks []*Block
 	hashCursor := b.NewestHash
@@ -88,18 +99,22 @@ func Blocks(b *blockchain) []*Block {
 
 func UTxOutsByAddress(address string, b *blockchain) []*UTxOut {
 	var uTxOuts []*UTxOut
-	creatorTx := map[string]bool{}
+	creatorTxs := make(map[string]bool)
+
 	for _, block := range Blocks(b) {
 		for _, tx := range block.Transactions {
 			for _, input := range tx.TxIns {
-				if input.Owner == address {
-					creatorTx[input.TxID] = true
+				if input.Signature == "COINBASE" {
+					break
+				}
+				if FindTx(b, input.TxID).TxOuts[input.Index].Address == address {
+					creatorTxs[input.TxID] = true
 				}
 			}
 			for index, output := range tx.TxOuts {
-				if output.Owner == address {
-					if _, ok := creatorTx[tx.Id]; !ok {
-						uTxOut := &UTxOut{tx.Id, index, output.Amount}
+				if output.Address == address {
+					if _, ok := creatorTxs[tx.ID]; !ok {
+						uTxOut := &UTxOut{tx.ID, index, output.Amount}
 						if !isOnMempool(uTxOut) {
 							uTxOuts = append(uTxOuts, uTxOut)
 						}
@@ -109,6 +124,7 @@ func UTxOutsByAddress(address string, b *blockchain) []*UTxOut {
 		}
 	}
 	return uTxOuts
+
 }
 
 func BalanceByAddress(address string, b *blockchain) int {

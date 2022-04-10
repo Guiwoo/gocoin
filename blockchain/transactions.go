@@ -8,41 +8,68 @@ import (
 	"github.com/guiwoo/gocoin/wallet"
 )
 
-type Tx struct {
-	Id        string   `json:"id"`
-	Timestamp int      `json:"timestamp"`
-	TxIns     []*TxIn  `json:"txins"`
-	TxOuts    []*TxOut `json:"txout"`
-}
-
-func (t *Tx) getId() {
-	t.Id = utils.Hash(t)
-}
-
 const (
 	minerReward int = 50
 )
 
+type mempool struct {
+	Txs []*Tx
+}
+
+var Mempool *mempool = &mempool{}
+
+type Tx struct {
+	ID        string   `json:"id"`
+	Timestamp int      `json:"timestamp"`
+	TxIns     []*TxIn  `json:"txIns"`
+	TxOuts    []*TxOut `json:"txOuts"`
+}
+
 type TxIn struct {
-	TxID  string `json:"txid"`
-	Index int    `json:"index"`
-	Owner string `json:"owner"`
+	TxID      string `json:"txId"`
+	Index     int    `json:"index"`
+	Signature string `json:"signature"`
 }
 
 type TxOut struct {
-	Owner  string `json:"owner"`
-	Amount int    `json:"amount"`
+	Address string `json:"address"`
+	Amount  int    `json:"amount"`
 }
 
 type UTxOut struct {
-	TxID   string `json:"txid"`
+	TxID   string `json:"txId"`
 	Index  int    `json:"index"`
 	Amount int    `json:"amount"`
 }
 
-func isOnMempool(uTxOut *UTxOut) bool {
-	exists := false
+func (t *Tx) getId() {
+	t.ID = utils.Hash(t)
+}
 
+func (t *Tx) sign() {
+	for _, txIn := range t.TxIns {
+		txIn.Signature = wallet.Sign(t.ID, wallet.Wallet())
+	}
+}
+
+func validate(tx *Tx) bool {
+	valid := true
+	for _, txIn := range tx.TxIns {
+		prevTx := FindTx(BlockChain(), txIn.TxID)
+		if prevTx == nil {
+			valid = false
+			break
+		}
+		address := prevTx.TxOuts[txIn.Index].Address
+		valid = wallet.Verify(txIn.Signature, tx.ID, address)
+		if !valid {
+			break
+		}
+	}
+	return valid
+}
+
+func isOnMempool(uTxOut *UTxOut) (exists bool) {
 Outer:
 	for _, tx := range Mempool.Txs {
 		for _, input := range tx.TxIns {
@@ -52,7 +79,7 @@ Outer:
 			}
 		}
 	}
-	return exists
+	return
 }
 
 func makeCoinbaseTx(address string) *Tx {
@@ -63,7 +90,7 @@ func makeCoinbaseTx(address string) *Tx {
 		{address, minerReward},
 	}
 	tx := Tx{
-		Id:        "",
+		ID:        "",
 		Timestamp: int(time.Now().Unix()),
 		TxIns:     txIns,
 		TxOuts:    txOuts,
@@ -72,15 +99,17 @@ func makeCoinbaseTx(address string) *Tx {
 	return &tx
 }
 
+var ErrorNoMoney = errors.New("not enough 돈")
+var ErrorNotValid = errors.New("Tx Invalid")
+
 func makeTx(from, to string, amount int) (*Tx, error) {
 	if BalanceByAddress(from, BlockChain()) < amount {
-		return nil, errors.New("not enough 돈")
+		return nil, ErrorNoMoney
 	}
 	var txOuts []*TxOut
 	var txIns []*TxIn
 	total := 0
 	uTxOuts := UTxOutsByAddress(from, BlockChain())
-
 	for _, uTxOut := range uTxOuts {
 		if total >= amount {
 			break
@@ -95,8 +124,18 @@ func makeTx(from, to string, amount int) (*Tx, error) {
 	}
 	txOut := &TxOut{to, amount}
 	txOuts = append(txOuts, txOut)
-	tx := &Tx{Id: "", Timestamp: int(time.Now().Unix()), TxIns: txIns, TxOuts: txOuts}
+	tx := &Tx{
+		ID:        "",
+		Timestamp: int(time.Now().Unix()),
+		TxIns:     txIns,
+		TxOuts:    txOuts,
+	}
 	tx.getId()
+	tx.sign()
+	valid := validate(tx)
+	if !valid {
+		return nil, ErrorNotValid
+	}
 	return tx, nil
 }
 
