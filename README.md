@@ -63,8 +63,14 @@
 - How to track who's open the ws >?
   - send the openPort by query awesomne
 - Create read, write method on peer add add one more struct for inbox message as a channel
+
   - and wrtie method is waiting message.
     - What does that mean ?
     - The portside when u send something to channel ?
     - Initpeer OpnePort and connect to on ws side
     - the wirte method is waiting that something and responed it Perfect
+
+- go run -race main.go -mode=rest -port=4000 ? => detecting data race !
+  - It happend two or two more go routines try to access the data and modify
+  - Mutex is Protecting the Sturct for preventing this rcae error
+  - So Lock the data before modifing and other which is calling that data ? is waiting the data till unlock

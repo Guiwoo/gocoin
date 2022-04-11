@@ -177,7 +177,7 @@ func peersHandler(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 
 	case "GET":
-		json.NewEncoder(rw).Encode(p2p.Peers)
+		json.NewEncoder(rw).Encode(p2p.AllPeers(&p2p.Peers))
 	}
 }
 
