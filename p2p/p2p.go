@@ -3,6 +3,7 @@ package p2p
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/guiwoo/gocoin/utils"
@@ -23,7 +24,9 @@ func Upgrade(rw http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(rw, r, nil)
 	utils.HandleErr(err)
-	initPeer(conn, ip, openPort)
+	peer := initPeer(conn, ip, openPort)
+	time.Sleep(20 * time.Second)
+	peer.inbox <- []byte("Hello from port 3000")
 }
 
 func AddPeer(address, port, openPort string) {
@@ -31,5 +34,7 @@ func AddPeer(address, port, openPort string) {
 	// nil part on maybe token or somthing like authentications. cookie token etc...
 	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%s:%s/ws?openPort=%s", address, port, openPort[1:]), nil)
 	utils.HandleErr(err)
-	initPeer(conn, address, port)
+	peer := initPeer(conn, address, port)
+	time.Sleep(10 * time.Second)
+	peer.inbox <- []byte("Hello from port 4000")
 }
