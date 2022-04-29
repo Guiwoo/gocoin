@@ -1,7 +1,9 @@
 package blockchain
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/guiwoo/gocoin/db"
@@ -12,6 +14,7 @@ type blockchain struct {
 	NewestHash        string `json:"newestHash"`
 	Height            int    `json:"height"`
 	CurrentDifficulty int    `json:"currentdifficulty"`
+	m                 sync.Mutex
 }
 
 const (
@@ -23,6 +26,47 @@ const (
 
 var b *blockchain
 var once sync.Once
+
+func (b *blockchain) restore(data []byte) {
+	utils.RestoreFromBytes(b, data)
+}
+
+func (b *blockchain) AddBlock() *Block {
+	block := CreateBlock(b.NewestHash, b.Height+1, difficulty(b))
+	b.NewestHash = block.Hash
+	b.Height = block.Height
+	b.CurrentDifficulty = block.Difficulty
+	persistBlockchain(b)
+	return block
+}
+
+func (b *blockchain) Replace(newBlocks []*Block) {
+	b.m.Lock()
+	defer b.m.Unlock()
+
+	b.CurrentDifficulty = newBlocks[0].Difficulty
+	b.Height = len(newBlocks)
+	b.NewestHash = newBlocks[0].Hash
+	persistBlockchain(b)
+	db.EmptyBlocks()
+	for _, block := range newBlocks {
+		block.persist()
+	}
+}
+
+func (b *blockchain) AddPeerBlock(block *Block) {
+	b.m.Lock()
+	defer b.m.Unlock()
+
+	b.Height += 1
+	b.CurrentDifficulty = block.Difficulty
+	b.NewestHash = block.Hash
+
+	persistBlockchain(b)
+	block.persist()
+
+	//mempool will face error !
+}
 
 func recaulculateDifficulty(b *blockchain) int {
 	allBlocks := Blocks(b)
@@ -49,20 +93,8 @@ func difficulty(b *blockchain) int {
 	}
 }
 
-func (b *blockchain) restore(data []byte) {
-	utils.RestoreFromBytes(b, data)
-}
-
 func persistBlockchain(b *blockchain) {
 	db.SaveBlockchain(utils.ToBytes(b))
-}
-
-func (b *blockchain) AddBlock() {
-	block := CreateBlock(b.NewestHash, b.Height+1, difficulty(b))
-	b.NewestHash = block.Hash
-	b.Height = block.Height
-	b.CurrentDifficulty = block.Difficulty
-	persistBlockchain(b)
 }
 
 func Txs(b *blockchain) []*Tx {
@@ -83,6 +115,9 @@ func FindTx(b *blockchain, target string) *Tx {
 }
 
 func Blocks(b *blockchain) []*Block {
+	b.m.Lock()
+	defer b.m.Unlock()
+
 	var blocks []*Block
 	hashCursor := b.NewestHash
 	for {
@@ -149,4 +184,11 @@ func BlockChain() *blockchain {
 		}
 	})
 	return b
+}
+
+func Status(b *blockchain, rw http.ResponseWriter) {
+	b.m.Lock()
+	defer b.m.Unlock()
+
+	utils.HandleErr(json.NewEncoder(rw).Encode(b))
 }
